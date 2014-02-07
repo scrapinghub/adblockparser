@@ -31,24 +31,24 @@ To learn about Adblock Plus filter syntax check these links:
 
 
 1. Get filter rules somewhere: write them manually, read lines from a file
-   downloaded from EasyList_, etc.:
+   downloaded from EasyList_, etc.::
 
        >>> raw_rules = [
        ...     "||ads.example.com^",
        ...     "@@||ads.example.com/notbanner^$~script",
        ... ]
 
-2. Create ``AdblockRules`` instance from rule strings:
+2. Create ``AdblockRules`` instance from rule strings::
 
        >>> from adblockparser import AdblockRules
        >>> rules = AdblockRules(raw_rules)
 
-3. Use this instance to check if an URL should be blocked or not:
+3. Use this instance to check if an URL should be blocked or not::
 
        >>> rules.should_block("http://ads.example.com")
        True
 
-   Rules with options are ignored unless you pass a dict with options values:
+   Rules with options are ignored unless you pass a dict with options values::
 
        >>> rules.should_block("http://ads.example.com/notbanner")
        True
@@ -70,13 +70,13 @@ Regex engines
 ``AdblockRules`` class creates a huge regex to match filters that
 don't use options. pyre2_ library works better than stdlib's re
 with such regexes. If you have pyre2_ installed then pass ``use_re2``
-argument to make ``AdblockRules`` work faster:
+argument to make ``AdblockRules`` work faster::
 
     >>> rules = AdblockRules(raw_rules, use_re2=True)  # doctest: +SKIP
 
 Sometimes it fails and prints something like
 ``re2/dfa.cc:459: DFA out of memory: prog size 270515 mem 1713850`` to stderr.
-Give re2 library more memory to fix that:
+Give re2 library more memory to fix that::
 
     >>> rules = AdblockRules(raw_rules, use_re2=True, max_mem=512*1024*1024)  # doctest: +SKIP
 
@@ -94,10 +94,15 @@ value), all rules involving ``script`` are discarded.
 This is slow if you have thousands of such rules. To make it work faster,
 explicitly list all options you want to support in ``AdblockRules`` constructor,
 disable skipping of unsupported rules, and always pass a dict with all options
-to ``should_block`` method:
+to ``should_block`` method::
 
-    >>> rules = AdblockRules(raw_rules, supported_options=['script', 'domain'], skip_unsupported_rules=False)
-    >>> rules.should_block("http://ads.example.com/notbanner", {'script': False, 'domain': 'www.mystartpage.com'})
+    >>> rules = AdblockRules(
+    ...    raw_rules,
+    ...    supported_options=['script', 'domain'],
+    ...    skip_unsupported_rules=False
+    ... )
+    >>> params = {'script': False, 'domain': 'www.mystartpage.com'}
+    >>> rules.should_block("http://ads.example.com/notbanner", params)
     False
 
 This way rules with unsupported options will be filtered once, when
