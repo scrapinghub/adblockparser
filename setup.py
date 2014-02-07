@@ -4,7 +4,7 @@ from distutils.core import setup
 version = '0.1'
 
 setup(
-    name='adblock-parser',
+    name='adblockparser',
     version=version,
     description="Parser for Adblock Plus rules",
     long_description=open('README.rst').read(),
@@ -22,9 +22,9 @@ setup(
     keywords='adblock easylist',
     author='Mikhail Korobov',
     author_email='kmike84@gmail.com',
-    url='http://github.com/scrapinghub/adblock-parser',
+    url='http://github.com/scrapinghub/adblockparser',
     license='MIT',
     packages=[
-        'adblock_parser'
+        'adblockparser'
     ],
 )

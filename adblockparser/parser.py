@@ -15,7 +15,7 @@ class AdblockRule(object):
 
     Instantiate AdblockRule with a rule line:
 
-    >>> from adblock_parser import AdblockRule
+    >>> from adblockparser import AdblockRule
     >>> rule = AdblockRule("@@||mydomain.no/artikler/$~third-party")
 
     Parsed data is available as rule attributes:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import pytest
-from adblock_parser import AdblockRule
+from adblockparser import AdblockRule
 
 COMMENT_RULES = [
     "[Adblock Plus 2.0]",

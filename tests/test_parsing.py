@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from adblock_parser import AdblockRules, AdblockRule
+from adblockparser import AdblockRules, AdblockRule
 
 import pytest
 
