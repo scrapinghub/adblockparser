@@ -1,0 +1,10 @@
+*.pyc
+*egg-info
+.tox
+venv
+build
+dist
+.idea
+.ipynb_checkpoints
+MANIFEST
+easylist.txt
