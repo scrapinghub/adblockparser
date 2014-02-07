@@ -1,3 +1,6 @@
 include *.txt
 include *.rst
+include tox.ini
+exclude easylist.txt
 recursive-include docs *.txt
+recursive-include tests *.py
