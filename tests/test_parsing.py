@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from adblock_parser import AdblockRules
+from adblock_parser import AdblockRules, AdblockRule
 
 import pytest
 
@@ -120,15 +120,81 @@ RULE_EXCEPTION_TESTS = {
 }
 
 
+RULES_WITH_OPTIONS_TESTS = {
+    # rule: url, params, matches?
+    "||example.com" : [
+        ("http://example.com", {'third-party': True}, True),
+        ("http://example2.com", {'third-party': True}, False),
+        ("http://example.com", {'third-party': False}, True),
+    ],
+    "||example.com^$third-party" : [
+        ("http://example.com", {'third-party': True}, True),
+        ("http://example2.com", {'third-party': True}, False),
+        ("http://example.com", {'third-party': False}, False),
+    ],
+    "||example.com^$third-party,~script" : [
+        ("http://example.com", {'third-party': True, 'script': True}, False),
+        ("http://example.com", {'third-party': True, 'script': False}, True),
+        ("http://example2.com", {'third-party': True, 'script': False}, False),
+        ("http://example.com", {'third-party': False, 'script': False}, False),
+    ],
+
+    "adv$domain=example.com|example.net": [
+        ("http://example.net/adv", {'domain': 'example.net'}, True),
+        ("http://somewebsite.com/adv", {'domain': 'example.com'}, True),
+        ("http://www.example.net/adv", {'domain': 'www.example.net'}, True),
+        ("http://my.subdomain.example.com/adv", {'domain': 'my.subdomain.example.com'}, True),
+
+        ("http://example.com/adv", {'domain': 'badexample.com'}, False),
+        ("http://example.com/adv", {'domain': 'otherdomain.net'}, False),
+        ("http://example.net/ad", {'domain': 'example.net'}, False),
+    ],
+
+    "adv$domain=example.com|~foo.example.com": [
+        ("http://example.net/adv", {'domain': 'example.com'}, True),
+        ("http://example.net/adv", {'domain': 'foo.example.com'}, False),
+        ("http://example.net/adv", {'domain': 'www.foo.example.com'}, False),
+    ],
+
+    "adv$domain=~example.com|foo.example.com": [
+        ("http://example.net/adv", {'domain': 'example.com'}, False),
+        ("http://example.net/adv", {'domain': 'foo.example.com'}, True),
+        ("http://example.net/adv", {'domain': 'www.foo.example.com'}, True),
+    ],
+
+    "adv$domain=example.com,~foo.example.com,script": [
+        ("http://example.net/adv", {'domain': 'example.com', 'script': True}, True),
+        ("http://example.net/adv", {'domain': 'foo.example.com', 'script': True}, False),
+        ("http://example.net/adv", {'domain': 'www.foo.example.com', 'script': True}, False),
+
+        ("http://example.net/adv", {'domain': 'example.com', 'script': False}, False),
+        ("http://example.net/adv", {'domain': 'foo.example.com', 'script': False}, False),
+        ("http://example.net/adv", {'domain': 'www.foo.example.com', 'script': False}, False),
+    ],
+}
+
+MULTIRULES_WITH_OPTIONS_TESTS = {
+    # rules: url, params, should_block
+    ("adv", "@@advice.$~script") : [
+        ("http://example.com/advice.html", {'script': False}, False),
+        ("http://example.com/advice.html", {'script': True}, True),
+        ("http://example.com/advert.html", {'script': False}, True),
+        ("http://example.com/advert.html", {'script': True}, True),
+    ],
+}
+
 @pytest.mark.parametrize(('use_re2'), USE_RE2)
-@pytest.mark.parametrize(('rule', 'results'), DOCUMENTED_TESTS.items())
-def test_documented_examples(rule, results, use_re2):
-    rules = AdblockRules([rule], use_re2=use_re2)
+@pytest.mark.parametrize(('rule_text', 'results'), DOCUMENTED_TESTS.items())
+def test_documented_examples(rule_text, results, use_re2):
+    rule = AdblockRule(rule_text)
+    rules = AdblockRules([rule_text], use_re2=use_re2)
 
     for url in results["blocks"]:
+        assert rule.match_url(url)
         assert rules.should_block(url)
 
     for url in results["doesn't block"]:
+        assert not rule.match_url(url)
         assert not rules.should_block(url)
 
 
@@ -144,6 +210,25 @@ def test_rule_exceptions(rules, results, use_re2):
         assert not rules.should_block(url)
 
 
+@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize(('rule_text', 'results'), RULES_WITH_OPTIONS_TESTS.items())
+def test_rule_with_options(rule_text, results, use_re2):
+    rule = AdblockRule(rule_text)
+    rules = AdblockRules([rule_text], use_re2=use_re2)
+
+    for url, params, match in results:
+        assert rule.match_url(url, params) == match
+        assert rules.should_block(url, params) == match
+
+
+@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize(('rules', 'results'), MULTIRULES_WITH_OPTIONS_TESTS.items())
+def test_rules_with_options(rules, results, use_re2):
+    rules = AdblockRules(rules, use_re2=use_re2)
+    for url, params, should_block in results:
+        assert rules.should_block(url, params) == should_block
+
+
 @pytest.mark.xfail
 def test_regex_rules():
     # Regex rules are not supported yet.
@@ -151,5 +236,15 @@ def test_regex_rules():
     rules = AdblockRules(["/banner\d+/"])
     assert rules.should_block("banner123")
     assert not rules.should_block("banners")
+
+
+def test_rules_supported_options():
+    rules = AdblockRules(["adv", "@@advice.$~script"])
+    assert not rules.should_block("http://example.com/advice.html", {'script': False})
+
+    # exception rule should be discarded if "script" option is not supported
+    rules2 = AdblockRules(["adv", "@@advice.$~script"], supported_options=[])
+    assert rules2.should_block("http://example.com/advice.html", {'script': False})
+
 
 

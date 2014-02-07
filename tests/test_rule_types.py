@@ -30,7 +30,7 @@ def test_is_comment(text):
     assert rule.is_comment
     assert not rule.is_html_rule
     assert not rule.is_exception
-    assert rule.options == []
+    assert rule.options == {}
     assert not rule.regex
 
 

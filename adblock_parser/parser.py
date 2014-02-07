@@ -16,7 +16,7 @@ class AdblockRule(object):
     Instantiate AdblockRule with a rule line:
 
     >>> from adblock_parser import AdblockRule
-    >>> rule = AdblockRule("@@||mydomain.no/artikler/$image,~third-party")
+    >>> rule = AdblockRule("@@||mydomain.no/artikler/$~third-party")
 
     Parsed data is available as rule attributes:
 
@@ -27,7 +27,7 @@ class AdblockRule(object):
     >>> rule.is_html_rule
     False
     >>> rule.options
-    ['image', '~third-party']
+    {'third-party': False}
     >>> print(rule.regex)
     ^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?mydomain\.no/artikler/
 
@@ -39,7 +39,8 @@ class AdblockRule(object):
     >>> rule.match_url("http://example.com/swf/index.html")
     False
 
-    Rules involving CSS selectors are detected but not supported well:
+    Rules involving CSS selectors are detected but not supported well
+    (``match_url`` doesn't work for them):
 
     >>> AdblockRule("domain.co.uk,domain2.com#@#.ad_description").is_html_rule
     True
@@ -86,9 +87,12 @@ class AdblockRule(object):
 
         if not self.is_comment and '$' in rule_text:
             rule_text, options_text = rule_text.split('$', 1)
-            self.options = self.split_options(options_text)
+            self.raw_options = self._split_options(options_text)
+            self.options = dict(self._parse_option(opt) for opt in self.raw_options)
         else:
-            self.options = []
+            self.raw_options = []
+            self.options = {}
+        self._options_keys = frozenset(self.options.keys()) - set(['match-case'])
 
         self.rule_text = rule_text
 
@@ -100,26 +104,91 @@ class AdblockRule(object):
         else:
             self.regex = self.rule_to_regex(rule_text)
 
-    def match_url(self, url):
-        if self.is_comment or self.is_html_rule:
-            return False
+    def match_url(self, url, params=None):
+        """
+        Return if this rule matches the URL.
 
-        # print(self.rule_re.pattern)
+        What to do if rule is matched is up to developer. Most likely
+        ``.is_exception`` attribute should be taken in account.
+        """
+        params = params or {}
+        for optname in self.options:
+            if optname == 'match-case':  # TODO
+                continue
+
+            if optname not in params:
+                raise ValueError("Rule requires option %s" % optname)
+
+            if optname == 'domain':
+                if not self._domain_matches(params['domain']):
+                    return False
+                continue
+
+            if params[optname] != self.options[optname]:
+                return False
+
+        return self._url_matches(url)
+
+    def _domain_matches(self, domain):
+        domain_rules = self.options['domain']
+        for domain in _domain_variants(domain):
+            if domain in domain_rules:
+                return domain_rules[domain]
+        return False
+
+    def _url_matches(self, url):
         return bool(re.search(self.regex, url))
 
+    def matching_supported(self, params=None):
+        """
+        Return whether this rule can return meaningful result,
+        given the `params` dict. If some options are missing,
+        then rule shouldn't be matched against, and this function
+        returns False.
+
+        >>> rule = AdblockRule("swf|")
+        >>> rule.matching_supported({})
+        True
+        >>> rule = AdblockRule("swf|$third-party")
+        >>> rule.matching_supported({})
+        False
+        >>> rule.matching_supported({'domain': 'example.com', 'third-party': False})
+        True
+
+        """
+        if self.is_comment:
+            return False
+
+        if self.is_html_rule:  # HTML rules are not supported yet
+            return False
+
+        params = params or {}
+        params_keys = set(params.keys())
+        if not params_keys.issuperset(self._options_keys):
+            # some of the required options are not given
+            return False
+
+        return True
+
     @classmethod
-    def split_options(cls, options_text):
+    def _split_options(cls, options_text):
         return cls.OPTIONS_SPLIT_RE.split(options_text)
 
     @classmethod
-    def parse_domain_option(cls, text):
-        if not text.startswith('domain='):
-            raise ValueError("Domain option must starts with 'domain='")
-
+    def _parse_domain_option(cls, text):
         domains = text[len('domain='):]
         parts = domains.replace(',', '|').split('|')
-        return [(not p.startswith('~'), p.lstrip('~')) for p in parts]
+        return dict(cls._parse_option_negation(p) for p in parts)
 
+    @classmethod
+    def _parse_option_negation(cls, text):
+        return (text.lstrip('~'), not text.startswith('~'))
+
+    @classmethod
+    def _parse_option(cls, text):
+        if text.startswith("domain="):
+            return ("domain", cls._parse_domain_option(text))
+        return cls._parse_option_negation(text)
 
     @classmethod
     def rule_to_regex(cls, rule):
@@ -173,11 +242,21 @@ class AdblockRule(object):
 
 class AdblockRules(object):
 
-    BINARY_RULES = ['']
+    def __init__(self, rules, supported_options=None, use_re2=False,
+                 max_mem=256*1024*1024, allow_unsupported_rules=False):
 
-    def __init__(self, rules, use_re2=False, max_mem=256*1024*1024):
-        self.rules = [r for r in (AdblockRule(r) for r in rules)
-                      if r.regex and not (r.is_comment or r.is_html_rule)]
+        if supported_options is None:
+            self.supported_options = AdblockRule.BINARY_OPTIONS + ['domain']
+        else:
+            self.supported_options = supported_options
+
+        _params = dict((opt, True) for opt in self.supported_options)
+        self.rules = [
+            r for r in (AdblockRule(r) for r in rules)
+            if r.regex and r.matching_supported(_params)
+        ]
+
+        self.allow_unsupported_rules = allow_unsupported_rules
 
         basic_rules = [r for r in self.rules if not r.options]
         advanced_rules = [r for r in self.rules if r.options]
@@ -185,16 +264,32 @@ class AdblockRules(object):
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
         self.blacklist2, self.whitelist2 = self._split_bw(advanced_rules)
 
-        _combined = partial(combined_regex, use_re2=use_re2, max_mem=max_mem)
+        _combined = partial(_combined_regex, use_re2=use_re2, max_mem=max_mem)
 
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
 
-    def should_block(self, url):
+    def should_block(self, url, params=None):
         if self.whitelist_re and self.whitelist_re.search(url):
             return False
 
-        # todo: advanced rules
+        params = params or {}
+
+        # TODO: group rules with similar options and match them at once
+
+        whitelist2 = self.whitelist2
+        blacklist2 = self.blacklist2
+        if self.allow_unsupported_rules:
+            whitelist2 = [rule for rule in self.whitelist2 if rule.matching_supported(params)]
+            blacklist2 = [rule for rule in self.blacklist2 if rule.matching_supported(params)]
+
+        for rule in whitelist2:
+            if rule.match_url(url, params):
+                return False
+
+        for rule in blacklist2:
+            if rule.match_url(url, params):
+                return True
 
         if self.blacklist_re and self.blacklist_re.search(url):
             return True
@@ -208,13 +303,23 @@ class AdblockRules(object):
         return blacklist, whitelist
 
 
-def combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
+def _domain_variants(domain):
+    """
+    >>> list(_domain_variants("foo.bar.example.com"))
+    ['foo.bar.example.com', 'bar.example.com', 'example.com']
+    """
+    parts = domain.split('.')
+    for i in range(len(parts), 1, -1):
+        yield ".".join(parts[-i:])
+
+
+def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
     """
     Return a compiled regex combined (using OR) from a list of ``regexes``.
     If there is nothing to combine, None is returned.
 
-    re2 library (https://github.com/axiak/pyre2) often can match large
-    regexes much faster (10x is not uncommon) than stdlib re module,
+    re2 library (https://github.com/axiak/pyre2) often can match and compile
+    large regexes much faster than stdlib re module (10x is not uncommon),
     but there are some gotchas:
 
     * at the moment of writing (Feb 2014) re2 from pypi doesn't work,

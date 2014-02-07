@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import pytest
 from adblock_parser import AdblockRule
 
-OPTIONS_TESTS = [
+SPLIT_OPTIONS_TESTS = [
     (
         "subdocument,third-party",
         ["subdocument", "third-party"]
@@ -19,31 +19,74 @@ OPTIONS_TESTS = [
     (
         "~document,xbl,domain=~foo,bar,baz,~collapse,domain=foo.xbl|bar",
         ["~document", "xbl", "domain=~foo,bar,baz", "~collapse", "domain=foo.xbl|bar"]
-    )
+    ),
+    (
+        "domain=~example.com,foo.example.com,script",
+        ["domain=~example.com,foo.example.com", "script"]
+    ),
 ]
 
-@pytest.mark.parametrize(('options_text', 'result'), OPTIONS_TESTS)
-def test_option_splitting(options_text, result):
-    assert result == AdblockRule.split_options(options_text)
+DOMAIN_PARSING_TESTS = [
+    ("domain=example.com", {'example.com': True}),
+    ("domain=example.com|example.net", {
+        'example.com': True,
+        'example.net': True
+    }),
+    ("domain=~example.com", {'example.com': False}),
+    ("domain=example.com|~foo.example.com", {
+        'example.com': True,
+        'foo.example.com': False
+    }),
+    ("domain=~foo.example.com|example.com", {
+        'example.com': True,
+        'foo.example.com': False
+    }),
+    ("domain=example.com,example.net", {
+        'example.com': True,
+        'example.net': True
+    }),
+    ("domain=example.com|~foo.example.com", {
+        'example.com': True,
+        'foo.example.com': False
+    }),
+    ("domain=~msnbc.msn.com,~www.nbcnews.com", {
+        'msnbc.msn.com': False,
+        'www.nbcnews.com': False
+    }),
+]
+
+PARSE_OPTIONS_TESTS = [
+    ("domain=foo.bar", {}),
+    ("+Ads/$~stylesheet", {'stylesheet': False}),
+    ("-advertising-$domain=~advertise.bingads.domain.com", {
+        "domain": {'advertise.bingads.domain.com': False}
+    }),
+    (".se/?placement=$script,third-party", {
+        'script': True,
+        'third-party': True
+    }),
+    ("||tst.net^$object-subrequest,third-party,domain=domain1.com|domain5.com", {
+        'object-subrequest': True,
+        'third-party': True,
+        'domain': {
+            'domain1.com': True,
+            'domain5.com': True,
+        }
+    })
+]
+
+@pytest.mark.parametrize(('text', 'result'), SPLIT_OPTIONS_TESTS)
+def test_option_splitting(text, result):
+    assert AdblockRule._split_options(text) == result
 
 
-def doctest_parse_domain():
-    """
-    >>> AdblockRule.parse_domain_option("domain=example.com")
-    [(True, 'example.com')]
-    >>> AdblockRule.parse_domain_option("domain=example.com|example.net")
-    [(True, 'example.com'), (True, 'example.net')]
-    >>> AdblockRule.parse_domain_option("domain=~example.com")
-    [(False, 'example.com')]
-    >>> AdblockRule.parse_domain_option("domain=example.com|~foo.example.com")
-    [(True, 'example.com'), (False, 'foo.example.com')]
-    >>> AdblockRule.parse_domain_option("domain=~foo.example.com|example.com")
-    [(False, 'foo.example.com'), (True, 'example.com')]
-    >>> AdblockRule.parse_domain_option("domain=example.com,example.net")
-    [(True, 'example.com'), (True, 'example.net')]
-    >>> AdblockRule.parse_domain_option("domain=example.com|~foo.example.com")
-    [(True, 'example.com'), (False, 'foo.example.com')]
-    >>> AdblockRule.parse_domain_option("domain=~msnbc.msn.com,~www.nbcnews.com")
-    [(False, 'msnbc.msn.com'), (False, 'www.nbcnews.com')]
-    """
-    pass
+@pytest.mark.parametrize(('text', 'result'), DOMAIN_PARSING_TESTS)
+def test_domain_parsing(text, result):
+    assert AdblockRule._parse_domain_option(text) == result
+
+
+@pytest.mark.parametrize(('text', 'result'), PARSE_OPTIONS_TESTS)
+def test_options_extraction(text, result):
+    rule = AdblockRule(text)
+    assert rule.options == result
+
