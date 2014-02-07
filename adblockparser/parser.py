@@ -242,21 +242,21 @@ class AdblockRule(object):
 
 class AdblockRules(object):
 
-    def __init__(self, rules, supported_options=None, use_re2=False,
-                 max_mem=256*1024*1024, allow_unsupported_rules=False):
+    def __init__(self, rules, supported_options=None, skip_unsupported_rules=True,
+                 use_re2=False, max_mem=256*1024*1024, rule_cls=AdblockRule):
 
         if supported_options is None:
-            self.supported_options = AdblockRule.BINARY_OPTIONS + ['domain']
+            self.supported_options = rule_cls.BINARY_OPTIONS + ['domain']
         else:
             self.supported_options = supported_options
 
         _params = dict((opt, True) for opt in self.supported_options)
         self.rules = [
-            r for r in (AdblockRule(r) for r in rules)
+            r for r in (rule_cls(r) for r in rules)
             if r.regex and r.matching_supported(_params)
         ]
 
-        self.allow_unsupported_rules = allow_unsupported_rules
+        self.skip_unsupported_rules = skip_unsupported_rules
 
         basic_rules = [r for r in self.rules if not r.options]
         advanced_rules = [r for r in self.rules if r.options]
@@ -275,11 +275,11 @@ class AdblockRules(object):
 
         params = params or {}
 
-        # TODO: group rules with similar options and match them at once
+        # TODO: group rules with similar options and match them in bigger steps
 
         whitelist2 = self.whitelist2
         blacklist2 = self.blacklist2
-        if self.allow_unsupported_rules:
+        if self.skip_unsupported_rules:
             whitelist2 = [rule for rule in self.whitelist2 if rule.matching_supported(params)]
             blacklist2 = [rule for rule in self.blacklist2 if rule.matching_supported(params)]
 
@@ -287,12 +287,12 @@ class AdblockRules(object):
             if rule.match_url(url, params):
                 return False
 
+        if self.blacklist_re and self.blacklist_re.search(url):
+            return True
+
         for rule in blacklist2:
             if rule.match_url(url, params):
                 return True
-
-        if self.blacklist_re and self.blacklist_re.search(url):
-            return True
 
         return False
 
