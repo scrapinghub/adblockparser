@@ -69,10 +69,8 @@ Regex engines
 
 ``AdblockRules`` class creates a huge regex to match filters that
 don't use options. pyre2_ library works better than stdlib's re
-with such regexes. If you have pyre2_ installed then pass ``use_re2``
-argument to make ``AdblockRules`` work faster::
-
-    >>> rules = AdblockRules(raw_rules, use_re2=True)  # doctest: +SKIP
+with such regexes. If you have pyre2_ installed then ``AdblockRules``
+should work faster.
 
 Sometimes it fails and prints something like
 ``re2/dfa.cc:459: DFA out of memory: prog size 270515 mem 1713850`` to stderr.

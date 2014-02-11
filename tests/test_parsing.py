@@ -6,9 +6,9 @@ import pytest
 
 try:
     import re2
-    USE_RE2 = [True, False]
+    USE_RE2 = [True, False, 'auto']
 except Exception:
-    USE_RE2 = [False]
+    USE_RE2 = ['auto']
 
 # examples are from https://adblockplus.org/en/filter-cheatsheet
 # and https://adblockplus.org/en/filters

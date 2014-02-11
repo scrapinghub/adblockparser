@@ -241,22 +241,32 @@ class AdblockRule(object):
 
 
 class AdblockRules(object):
+    """
+    AdblockRules is a class for checking URLs against multiple AdBlock rules.
+
+    It is more efficient to use AdblockRules instead of creating AdblockRule
+    instances manually and checking them one-by-one because AdblockRules
+    optimizes some common cases.
+    """
 
     def __init__(self, rules, supported_options=None, skip_unsupported_rules=True,
-                 use_re2=False, max_mem=256*1024*1024, rule_cls=AdblockRule):
+                 use_re2='auto', max_mem=256*1024*1024, rule_cls=AdblockRule):
 
         if supported_options is None:
             self.supported_options = rule_cls.BINARY_OPTIONS + ['domain']
         else:
             self.supported_options = supported_options
 
+        self.uses_re2 = _is_re2_supported() if use_re2 == 'auto' else use_re2
+        self.re2_max_mem = max_mem
+        self.rule_cls = rule_cls
+        self.skip_unsupported_rules = skip_unsupported_rules
+
         _params = dict((opt, True) for opt in self.supported_options)
         self.rules = [
-            r for r in (rule_cls(r) for r in rules)
+            r for r in (self.rule_cls(r) for r in rules)
             if r.regex and r.matching_supported(_params)
         ]
-
-        self.skip_unsupported_rules = skip_unsupported_rules
 
         basic_rules = [r for r in self.rules if not r.options]
         advanced_rules = [r for r in self.rules if r.options]
@@ -264,7 +274,7 @@ class AdblockRules(object):
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
         self.blacklist2, self.whitelist2 = self._split_bw(advanced_rules)
 
-        _combined = partial(_combined_regex, use_re2=use_re2, max_mem=max_mem)
+        _combined = partial(_combined_regex, use_re2=self.uses_re2, max_mem=max_mem)
 
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
@@ -322,8 +332,8 @@ def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
     large regexes much faster than stdlib re module (10x is not uncommon),
     but there are some gotchas:
 
-    * at the moment of writing (Feb 2014) re2 from pypi doesn't work,
-      it must be installed from the github repo;
+    * at the moment of writing (Feb 2014) latest re2 pypi release (0.2.20)
+      doesn't work; pyre2 must be installed from the github repo;
     * in case of "DFA out of memory" errors use ``max_mem`` argument
       to increase the amount of memory re2 is allowed to use.
     """
@@ -336,3 +346,14 @@ def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
         import re2
         return re2.compile(regex_str, flags=flags, max_mem=max_mem)
     return re.compile(regex_str, flags=flags)
+
+
+def _is_re2_supported():
+    try:
+        import re2
+    except ImportError:
+        return False
+
+    # re2.match doesn't work in re2 v0.2.20 installed from pypi
+    # (it always returns None).
+    return re2.match('foo', 'foo') is not None
