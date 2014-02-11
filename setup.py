@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
-version = '0.1'
+version = '0.1.1'
 
 setup(
     name='adblockparser',
     version=version,
     description="Parser for Adblock Plus rules",
-    long_description=open('README.rst').read(),
+    long_description=open('README.rst').read() + '\n\n' + open('CHANGES.rst').read(),
     classifiers=[
         'Development Status :: 3 - Alpha',
         "Intended Audience :: Developers",
