@@ -210,7 +210,7 @@ class AdblockRule(object):
         # Separator character ^ matches anything but a letter, a digit, or
         # one of the following: _ - . %. The end of the address is also
         # accepted as separator.
-        rule = rule.replace("^", "(?:[^\w\d%_\-.%]|$)")
+        rule = rule.replace("^", "(?:[^\w\d_\-.%]|$)")
 
         # * symbol
         rule = rule.replace("*", ".*")
