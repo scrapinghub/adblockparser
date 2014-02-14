@@ -99,8 +99,8 @@ to ``should_block`` method::
     ...    supported_options=['script', 'domain'],
     ...    skip_unsupported_rules=False
     ... )
-    >>> params = {'script': False, 'domain': 'www.mystartpage.com'}
-    >>> rules.should_block("http://ads.example.com/notbanner", params)
+    >>> options = {'script': False, 'domain': 'www.mystartpage.com'}
+    >>> rules.should_block("http://ads.example.com/notbanner", options)
     False
 
 This way rules with unsupported options will be filtered once, when

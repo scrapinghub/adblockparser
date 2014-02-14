@@ -104,27 +104,27 @@ class AdblockRule(object):
         else:
             self.regex = self.rule_to_regex(rule_text)
 
-    def match_url(self, url, params=None):
+    def match_url(self, url, options=None):
         """
         Return if this rule matches the URL.
 
         What to do if rule is matched is up to developer. Most likely
         ``.is_exception`` attribute should be taken in account.
         """
-        params = params or {}
+        options = options or {}
         for optname in self.options:
             if optname == 'match-case':  # TODO
                 continue
 
-            if optname not in params:
+            if optname not in options:
                 raise ValueError("Rule requires option %s" % optname)
 
             if optname == 'domain':
-                if not self._domain_matches(params['domain']):
+                if not self._domain_matches(options['domain']):
                     return False
                 continue
 
-            if params[optname] != self.options[optname]:
+            if options[optname] != self.options[optname]:
                 return False
 
         return self._url_matches(url)
@@ -139,10 +139,10 @@ class AdblockRule(object):
     def _url_matches(self, url):
         return bool(re.search(self.regex, url))
 
-    def matching_supported(self, params=None):
+    def matching_supported(self, options=None):
         """
         Return whether this rule can return meaningful result,
-        given the `params` dict. If some options are missing,
+        given the `options` dict. If some options are missing,
         then rule shouldn't be matched against, and this function
         returns False.
 
@@ -162,9 +162,9 @@ class AdblockRule(object):
         if self.is_html_rule:  # HTML rules are not supported yet
             return False
 
-        params = params or {}
-        params_keys = set(params.keys())
-        if not params_keys.issuperset(self._options_keys):
+        options = options or {}
+        keys = set(options.keys())
+        if not keys.issuperset(self._options_keys):
             # some of the required options are not given
             return False
 
@@ -279,29 +279,29 @@ class AdblockRules(object):
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
 
-    def should_block(self, url, params=None):
+    def should_block(self, url, options=None):
         if self.whitelist_re and self.whitelist_re.search(url):
             return False
 
-        params = params or {}
+        options = options or {}
 
         # TODO: group rules with similar options and match them in bigger steps
 
         whitelist2 = self.whitelist2
         blacklist2 = self.blacklist2
         if self.skip_unsupported_rules:
-            whitelist2 = [rule for rule in self.whitelist2 if rule.matching_supported(params)]
-            blacklist2 = [rule for rule in self.blacklist2 if rule.matching_supported(params)]
+            whitelist2 = [rule for rule in self.whitelist2 if rule.matching_supported(options)]
+            blacklist2 = [rule for rule in self.blacklist2 if rule.matching_supported(options)]
 
         for rule in whitelist2:
-            if rule.match_url(url, params):
+            if rule.match_url(url, options):
                 return False
 
         if self.blacklist_re and self.blacklist_re.search(url):
             return True
 
         for rule in blacklist2:
-            if rule.match_url(url, params):
+            if rule.match_url(url, options):
                 return True
 
         return False
