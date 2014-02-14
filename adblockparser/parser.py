@@ -272,7 +272,7 @@ class AdblockRules(object):
         advanced_rules = [r for r in self.rules if r.options]
 
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
-        self.blacklist2, self.whitelist2 = self._split_bw(advanced_rules)
+        self.blacklist_adv, self.whitelist_adv = self._split_bw(advanced_rules)
 
         _combined = partial(_combined_regex, use_re2=self.uses_re2, max_mem=max_mem)
 
@@ -280,31 +280,35 @@ class AdblockRules(object):
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
 
     def should_block(self, url, options=None):
-        if self.whitelist_re and self.whitelist_re.search(url):
-            return False
-
-        options = options or {}
-
         # TODO: group rules with similar options and match them in bigger steps
+        options = options or {}
+        if self._is_whitelisted(url, options):
+            return False
+        if self._is_blacklisted(url, options):
+            return True
+        return False
 
-        whitelist2 = self.whitelist2
-        blacklist2 = self.blacklist2
+    def _is_whitelisted(self, url, options):
+        if self.whitelist_re and self.whitelist_re.search(url):
+            return True
+
+        whitelist_adv = self.whitelist_adv
         if self.skip_unsupported_rules:
-            whitelist2 = [rule for rule in self.whitelist2 if rule.matching_supported(options)]
-            blacklist2 = [rule for rule in self.blacklist2 if rule.matching_supported(options)]
+            whitelist_adv = [rule for rule in self.whitelist_adv
+                          if rule.matching_supported(options)]
 
-        for rule in whitelist2:
-            if rule.match_url(url, options):
-                return False
+        return any(rule.match_url(url, options) for rule in whitelist_adv)
 
+    def _is_blacklisted(self, url, options):
         if self.blacklist_re and self.blacklist_re.search(url):
             return True
 
-        for rule in blacklist2:
-            if rule.match_url(url, options):
-                return True
+        blacklist_adv = self.blacklist_adv
+        if self.skip_unsupported_rules:
+            blacklist_adv = [rule for rule in self.blacklist_adv
+                          if rule.matching_supported(options)]
 
-        return False
+        return any(rule.match_url(url, options) for rule in blacklist_adv)
 
     @classmethod
     def _split_bw(cls, rules):
