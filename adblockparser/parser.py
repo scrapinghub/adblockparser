@@ -72,6 +72,10 @@ class AdblockRule(object):
     OPTIONS_SPLIT_PAT = ',(?=~?(?:%s))' % ('|'.join(BINARY_OPTIONS + ["domain"]))
     OPTIONS_SPLIT_RE = re.compile(OPTIONS_SPLIT_PAT)
 
+    __slots__ = ['raw_rule_text', 'is_comment', 'is_html_rule', 'is_exception',
+                 'raw_options', 'options', '_options_keys', 'rule_text',
+                 'regex']
+
     def __init__(self, rule_text):
         self.raw_rule_text = rule_text
 
