@@ -349,11 +349,10 @@ def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
     if not joined_regexes:
         return None
 
-    regex_str = "(%s)" % joined_regexes
     if use_re2:
         import re2
-        return re2.compile(regex_str, flags=flags, max_mem=max_mem)
-    return re.compile(regex_str, flags=flags)
+        return re2.compile(joined_regexes, flags=flags, max_mem=max_mem)
+    return re.compile(joined_regexes, flags=flags)
 
 
 def _is_re2_supported():
