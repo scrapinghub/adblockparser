@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 import re
 from functools import partial
+from adblockparser.utils import split_data
 
 
 class AdblockRule(object):
@@ -272,8 +273,7 @@ class AdblockRules(object):
             if r.regex and r.matching_supported(_params)
         ]
 
-        basic_rules = [r for r in self.rules if not r.options]
-        advanced_rules = [r for r in self.rules if r.options]
+        advanced_rules, basic_rules = split_data(self.rules, lambda r: r.options)
 
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
         self.blacklist_adv, self.whitelist_adv = self._split_bw(advanced_rules)
@@ -316,9 +316,7 @@ class AdblockRules(object):
 
     @classmethod
     def _split_bw(cls, rules):
-        blacklist = [r for r in rules if not r.is_exception]
-        whitelist = [r for r in rules if r.is_exception]
-        return blacklist, whitelist
+        return split_data(rules, lambda r: not r.is_exception)
 
 
 def _domain_variants(domain):
