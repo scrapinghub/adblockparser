@@ -13,8 +13,10 @@ Installation
 
     pip install adblockparser
 
-For faster filter matching (2x-10x for a list of default EasyList_ filters)
-install pyre2_ library. Version from github is required::
+If you plan to use this library with a large number of filters
+installing pyre2_ library is highly recommended: the speedup
+for a list of default EasyList_ filters can be greater than 1000x.
+Version from github is required::
 
     pip install git+https://github.com/axiak/pyre2.git#egg=re2
 
@@ -70,9 +72,10 @@ Regex engines
 ``AdblockRules`` class creates a huge regex to match filters that
 don't use options. pyre2_ library works better than stdlib's re
 with such regexes. If you have pyre2_ installed then ``AdblockRules``
-should work faster.
+should work faster, and the speedup can be dramatic - more than 1000x
+in some cases.
 
-Sometimes it fails and prints something like
+Sometimes pyre2 prints something like
 ``re2/dfa.cc:459: DFA out of memory: prog size 270515 mem 1713850`` to stderr.
 Give re2 library more memory to fix that::
 
