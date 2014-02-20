@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
-version = '0.1.1'
+version = '0.2'
 
 setup(
     name='adblockparser',
@@ -24,7 +24,5 @@ setup(
     author_email='kmike84@gmail.com',
     url='http://github.com/scrapinghub/adblockparser',
     license='MIT',
-    packages=[
-        'adblockparser'
-    ],
+    packages=['adblockparser'],
 )
