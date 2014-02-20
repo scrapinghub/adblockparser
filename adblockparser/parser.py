@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import re
+from collections import defaultdict
 from functools import partial
 from adblockparser.utils import split_data
 
@@ -275,13 +276,19 @@ class AdblockRules(object):
 
         advanced_rules, basic_rules = split_data(self.rules, lambda r: r.options)
 
+        domain_rules, non_domain_rules = split_data(
+            advanced_rules,
+            lambda r: 'domain' in r.options
+        )
+
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
-        self.blacklist_adv, self.whitelist_adv = self._split_bw(advanced_rules)
-
         _combined = partial(_combined_regex, use_re2=self.uses_re2, max_mem=max_mem)
-
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
+
+        self.blacklist_adv, self.whitelist_adv = self._split_bw(non_domain_rules)
+        self.blacklist_domains, self.whitelist_domains = self._split_bw_domain(domain_rules)
+
 
     def should_block(self, url, options=None):
         # TODO: group rules with similar options and match them in bigger steps
@@ -293,30 +300,65 @@ class AdblockRules(object):
         return False
 
     def _is_whitelisted(self, url, options):
-        if self.whitelist_re and self.whitelist_re.search(url):
-            return True
-
-        whitelist_adv = self.whitelist_adv
-        if self.skip_unsupported_rules:
-            whitelist_adv = [rule for rule in self.whitelist_adv
-                          if rule.matching_supported(options)]
-
-        return any(rule.match_url(url, options) for rule in whitelist_adv)
+        return self._matches(
+            url, options,
+            self.whitelist_re, self.whitelist_domains, self.whitelist_adv
+        )
 
     def _is_blacklisted(self, url, options):
-        if self.blacklist_re and self.blacklist_re.search(url):
+        return self._matches(
+            url, options,
+            self.blacklist_re, self.blacklist_domains, self.blacklist_adv
+        )
+
+    def _matches(self, url, options,
+                 general_re, rules_with_domains, rules_with_options):
+        """
+        Return if ``url``/``options`` are matched by rules defined by
+        ``general_re``, ``rules_with_domains`` and ``rules_with_options``.
+
+        ``general_re`` is a compiled regex for rules without options.
+
+        ``rules_with_domains`` is a {domain: [rules]} mapping - per-domain
+        index of applicable rules which have 'domain' option.
+
+         ``rules_with_options`` is a list of AdblockRule instances that
+        don't have 'domain' option, but have other options.
+        """
+        if general_re and general_re.search(url):
             return True
 
-        blacklist_adv = self.blacklist_adv
-        if self.skip_unsupported_rules:
-            blacklist_adv = [rule for rule in self.blacklist_adv
-                          if rule.matching_supported(options)]
+        rules = []
+        if 'domain' in options and rules_with_domains:
+            src_domain = options['domain']
+            for domain in _domain_variants(src_domain):
+                if domain in rules_with_domains:
+                    rules = rules_with_domains[domain]
+                    break
 
-        return any(rule.match_url(url, options) for rule in blacklist_adv)
+        rules.extend(rules_with_options)
+
+        if self.skip_unsupported_rules:
+            rules = [rule for rule in rules if rule.matching_supported(options)]
+
+        return any(rule.match_url(url, options) for rule in rules)
 
     @classmethod
     def _split_bw(cls, rules):
         return split_data(rules, lambda r: not r.is_exception)
+
+    @classmethod
+    def _split_bw_domain(cls, rules):
+        blacklist, whitelist = cls._split_bw(rules)
+        return cls._domain_index(blacklist), cls._domain_index(whitelist)
+
+    @classmethod
+    def _domain_index(cls, rules):
+        result = defaultdict(list)
+        for rule in rules:
+            for domain in rule.options.get('domain', []):
+                result[domain].append(rule)
+        return dict(result)
 
 
 def _domain_variants(domain):
