@@ -277,13 +277,19 @@ class AdblockRules(object):
             if r.regex and r.matching_supported(_params)
         ]
 
+        # "advanced" rules are rules with options,
+        # "basic" rules are rules without options
         advanced_rules, basic_rules = split_data(self.rules, lambda r: r.options)
 
+        # rules with domain option are handled separately:
+        # we may discard most rules based on domain information,
+        # so parser builds an index for that later.
         domain_rules, non_domain_rules = split_data(
             advanced_rules,
             lambda r: 'domain' in r.options
         )
 
+        # split rules into blacklists and whitelists
         self.blacklist, self.whitelist = self._split_bw(basic_rules)
         _combined = partial(_combined_regex, use_re2=self.uses_re2, max_mem=max_mem)
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
