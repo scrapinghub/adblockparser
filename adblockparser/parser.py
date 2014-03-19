@@ -245,6 +245,9 @@ class AdblockRule(object):
 
         return rule
 
+    def __repr__(self):
+        return "AdblockRule(%r)" % self.raw_rule_text
+
 
 class AdblockRules(object):
     """
