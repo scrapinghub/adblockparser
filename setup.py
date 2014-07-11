@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from distutils.core import setup
+from setuptools import setup
 
 version = '0.2'
 
@@ -18,11 +18,12 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
     ],
     keywords='adblock easylist',
     author='Mikhail Korobov',
     author_email='kmike84@gmail.com',
-    url='http://github.com/scrapinghub/adblockparser',
+    url='https://github.com/scrapinghub/adblockparser',
     license='MIT',
     packages=['adblockparser'],
 )
