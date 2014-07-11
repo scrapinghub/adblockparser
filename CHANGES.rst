@@ -1,6 +1,14 @@
 Changes
 =======
 
+0.3 (2014-07-11)
+----------------
+
+* Switch to setuptools;
+* better ``__repr__`` for ``AdblockRule``;
+* Python 3.4 support is confirmed;
+* testing improvements.
+
 0.2 (2014-03-20)
 ----------------
 
