@@ -1,6 +1,9 @@
 adblockparser
 =============
 
+.. image:: https://secure.travis-ci.org/scrapinghub/adblockparser.png?branch=master
+   :target: http://travis-ci.org/scrapinghub/adblockparser
+
 ``adblockparser`` is a package for working with `Adblock Plus`_ filter rules.
 It can parse Adblock Plus filters and match URLs against them.
 
