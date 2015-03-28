@@ -289,7 +289,10 @@ class AdblockRules(object):
 
         _params = dict((opt, True) for opt in self.supported_options)
         self.rules = [
-            r for r in (self.rule_cls(r) for r in rules)
+            r for r in (
+                r if isinstance(r, rule_cls) else rule_cls(r)
+                for r in rules
+            )
             if r.regex and r.matching_supported(_params)
         ]
 

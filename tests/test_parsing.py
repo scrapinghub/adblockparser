@@ -245,3 +245,10 @@ def test_rules_supported_options():
     # exception rule should be discarded if "script" option is not supported
     rules2 = AdblockRules(["adv", "@@advice.$~script"], supported_options=[])
     assert rules2.should_block("http://example.com/advice.html", {'script': False})
+
+
+def test_rules_instantiation():
+    rule = AdblockRule("adv")
+    rules = AdblockRules([rule])
+    assert rule.match_url("http://example.com/adv")
+    assert rules.should_block("http://example.com/adv")
