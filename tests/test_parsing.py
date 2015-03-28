@@ -122,17 +122,17 @@ RULE_EXCEPTION_TESTS = {
 
 RULES_WITH_OPTIONS_TESTS = {
     # rule: url, params, matches?
-    "||example.com" : [
+    "||example.com": [
         ("http://example.com", {'third-party': True}, True),
         ("http://example2.com", {'third-party': True}, False),
         ("http://example.com", {'third-party': False}, True),
     ],
-    "||example.com^$third-party" : [
+    "||example.com^$third-party": [
         ("http://example.com", {'third-party': True}, True),
         ("http://example2.com", {'third-party': True}, False),
         ("http://example.com", {'third-party': False}, False),
     ],
-    "||example.com^$third-party,~script" : [
+    "||example.com^$third-party,~script": [
         ("http://example.com", {'third-party': True, 'script': True}, False),
         ("http://example.com", {'third-party': True, 'script': False}, True),
         ("http://example2.com", {'third-party': True, 'script': False}, False),
@@ -175,7 +175,7 @@ RULES_WITH_OPTIONS_TESTS = {
 
 MULTIRULES_WITH_OPTIONS_TESTS = {
     # rules: url, params, should_block
-    ("adv", "@@advice.$~script") : [
+    ("adv", "@@advice.$~script"): [
         ("http://example.com/advice.html", {'script': False}, False),
         ("http://example.com/advice.html", {'script': True}, True),
         ("http://example.com/advert.html", {'script': False}, True),
@@ -183,7 +183,7 @@ MULTIRULES_WITH_OPTIONS_TESTS = {
     ],
 }
 
-@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize('use_re2', USE_RE2)
 @pytest.mark.parametrize(('rule_text', 'results'), DOCUMENTED_TESTS.items())
 def test_documented_examples(rule_text, results, use_re2):
     rule = AdblockRule(rule_text)
@@ -198,7 +198,7 @@ def test_documented_examples(rule_text, results, use_re2):
         assert not rules.should_block(url)
 
 
-@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize('use_re2', USE_RE2)
 @pytest.mark.parametrize(('rules', 'results'), RULE_EXCEPTION_TESTS.items())
 def test_rule_exceptions(rules, results, use_re2):
     rules = AdblockRules(rules, use_re2=use_re2)
@@ -210,7 +210,7 @@ def test_rule_exceptions(rules, results, use_re2):
         assert not rules.should_block(url)
 
 
-@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize('use_re2', USE_RE2)
 @pytest.mark.parametrize(('rule_text', 'results'), RULES_WITH_OPTIONS_TESTS.items())
 def test_rule_with_options(rule_text, results, use_re2):
     rule = AdblockRule(rule_text)
@@ -221,7 +221,7 @@ def test_rule_with_options(rule_text, results, use_re2):
         assert rules.should_block(url, params) == match
 
 
-@pytest.mark.parametrize(('use_re2'), USE_RE2)
+@pytest.mark.parametrize('use_re2', USE_RE2)
 @pytest.mark.parametrize(('rules', 'results'), MULTIRULES_WITH_OPTIONS_TESTS.items())
 def test_rules_with_options(rules, results, use_re2):
     rules = AdblockRules(rules, use_re2=use_re2)
@@ -245,6 +245,3 @@ def test_rules_supported_options():
     # exception rule should be discarded if "script" option is not supported
     rules2 = AdblockRules(["adv", "@@advice.$~script"], supported_options=[])
     assert rules2.should_block("http://example.com/advice.html", {'script': False})
-
-
-

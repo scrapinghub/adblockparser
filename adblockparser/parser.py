@@ -155,14 +155,27 @@ class AdblockRule(object):
         then rule shouldn't be matched against, and this function
         returns False.
 
+        No options:
         >>> rule = AdblockRule("swf|")
         >>> rule.matching_supported({})
         True
+
+        Option is used in the rule, but its value is not available
+        at matching time:
         >>> rule = AdblockRule("swf|$third-party")
         >>> rule.matching_supported({})
         False
+
+        Option is used in the rule, and option value is available
+        at matching time:
+        >>> rule = AdblockRule("swf|$third-party")
         >>> rule.matching_supported({'domain': 'example.com', 'third-party': False})
         True
+
+        Rule is a comment:
+        >>> rule = AdblockRule("!this is not a rule")
+        >>> rule.matching_supported({})
+        False
 
         """
         if self.is_comment:
@@ -301,7 +314,6 @@ class AdblockRules(object):
         self.blacklist_adv, self.whitelist_adv = self._split_bw(non_domain_rules)
         self.blacklist_domains, self.whitelist_domains = self._split_bw_domain(domain_rules)
 
-
     def should_block(self, url, options=None):
         # TODO: group rules with similar options and match them in bigger steps
         options = options or {}
@@ -377,6 +389,8 @@ def _domain_variants(domain):
     """
     >>> list(_domain_variants("foo.bar.example.com"))
     ['foo.bar.example.com', 'bar.example.com', 'example.com']
+    >>> list(_domain_variants("example.com"))
+    ['example.com']
     """
     parts = domain.split('.')
     for i in range(len(parts), 1, -1):
