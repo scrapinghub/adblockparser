@@ -76,10 +76,11 @@ class AdblockRule(object):
 
     __slots__ = ['raw_rule_text', 'is_comment', 'is_html_rule', 'is_exception',
                  'raw_options', 'options', '_options_keys', 'rule_text',
-                 'regex']
+                 'regex', 'regex_re']
 
     def __init__(self, rule_text):
         self.raw_rule_text = rule_text
+        self.regex_re = None
 
         rule_text = rule_text.strip()
         self.is_comment = rule_text.startswith(('!', '[Adblock'))
@@ -143,7 +144,9 @@ class AdblockRule(object):
         return False
 
     def _url_matches(self, url):
-        return bool(re.search(self.regex, url))
+        if self.regex_re is None:
+            self.regex_re = re.compile(self.regex)
+        return bool(self.regex_re.search(url))
 
     def matching_supported(self, options=None):
         """
