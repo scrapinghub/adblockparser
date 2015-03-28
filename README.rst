@@ -1,8 +1,18 @@
 adblockparser
 =============
 
-.. image:: https://secure.travis-ci.org/scrapinghub/adblockparser.png?branch=master
-   :target: http://travis-ci.org/scrapinghub/adblockparser
+.. image:: https://img.shields.io/pypi/v/adblockparser.svg
+   :target: https://pypi.python.org/pypi/adblockparser
+   :alt: PyPI Version
+
+.. image:: https://img.shields.io/pypi/l/adblockparser.svg
+   :target: https://github.com/scrapinghub/adblockparser/blob/master/LICENSE.txt
+   :alt: License
+
+.. image:: https://img.shields.io/travis/scrapinghub/adblockparser/master.svg
+   :target: https://travis-ci.org/scrapinghub/adblockparser
+   :alt: Build Status
+
 
 ``adblockparser`` is a package for working with `Adblock Plus`_ filter rules.
 It can parse Adblock Plus filters and match URLs against them.
