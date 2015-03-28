@@ -162,6 +162,34 @@ RULES_WITH_OPTIONS_TESTS = {
         ("http://example.net/adv", {'domain': 'www.foo.example.com'}, True),
     ],
 
+    "adv$domain=~example.com": [
+        ("http://example.net/adv", {'domain': 'otherdomain.com'}, True),
+        ("http://somewebsite.com/adv", {'domain': 'example.com'}, False),
+    ],
+
+    "adv$domain=~example.com|~example.net": [
+        ("http://example.net/adv", {'domain': 'example.net'}, False),
+        ("http://somewebsite.com/adv", {'domain': 'example.com'}, False),
+        ("http://www.example.net/adv", {'domain': 'www.example.net'}, False),
+        ("http://my.subdomain.example.com/adv", {'domain': 'my.subdomain.example.com'}, False),
+
+        ("http://example.com/adv", {'domain': 'badexample.com'}, True),
+        ("http://example.com/adv", {'domain': 'otherdomain.net'}, True),
+        ("http://example.net/ad", {'domain': 'example.net'}, False),
+    ],
+
+    "adv$domain=example.com|~example.net": [
+        # ~example.net should be ignored here
+        ("http://example.net/adv", {'domain': 'example.net'}, False),
+        ("http://somewebsite.com/adv", {'domain': 'example.com'}, True),
+        ("http://www.example.net/adv", {'domain': 'www.example.net'}, False),
+        ("http://my.subdomain.example.com/adv", {'domain': 'my.subdomain.example.com'}, True),
+
+        ("http://example.com/adv", {'domain': 'badexample.com'}, False),
+        ("http://example.com/adv", {'domain': 'otherdomain.net'}, False),
+        ("http://example.net/ad", {'domain': 'example.net'}, False),
+    ],
+
     "adv$domain=example.com,~foo.example.com,script": [
         ("http://example.net/adv", {'domain': 'example.com', 'script': True}, True),
         ("http://example.net/adv", {'domain': 'foo.example.com', 'script': True}, False),

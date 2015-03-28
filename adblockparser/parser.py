@@ -141,7 +141,7 @@ class AdblockRule(object):
         for domain in _domain_variants(domain):
             if domain in domain_rules:
                 return domain_rules[domain]
-        return False
+        return not any(domain_rules.values())
 
     def _url_matches(self, url):
         if self.regex_re is None:
@@ -300,12 +300,19 @@ class AdblockRules(object):
         # "basic" rules are rules without options
         advanced_rules, basic_rules = split_data(self.rules, lambda r: r.options)
 
-        # rules with domain option are handled separately:
-        # we may discard most rules based on domain information,
-        # so parser builds an index for that later.
-        domain_rules, non_domain_rules = split_data(
+        # Rules with domain option are handled separately:
+        # if user passes a domain we can discard all rules which
+        # require another domain. So we build an index:
+        # {domain: [rules_which_require_it]}, and only check
+        # rules which require our domain. If a rule doesn't require any
+        # domain.
+        # TODO: what about ~rules? Should we match them earlier?
+        domain_required_rules, non_domain_rules = split_data(
             advanced_rules,
-            lambda r: 'domain' in r.options
+            lambda r: (
+                'domain' in r.options
+                and any(r.options["domain"].values())
+            )
         )
 
         # split rules into blacklists and whitelists
@@ -314,8 +321,10 @@ class AdblockRules(object):
         self.blacklist_re = _combined([r.regex for r in self.blacklist])
         self.whitelist_re = _combined([r.regex for r in self.whitelist])
 
-        self.blacklist_adv, self.whitelist_adv = self._split_bw(non_domain_rules)
-        self.blacklist_domains, self.whitelist_domains = self._split_bw_domain(domain_rules)
+        self.blacklist_with_options, self.whitelist_with_options = \
+            self._split_bw(non_domain_rules)
+        self.blacklist_require_domain, self.whitelist_require_domain = \
+            self._split_bw_domain(domain_required_rules)
 
     def should_block(self, url, options=None):
         # TODO: group rules with similar options and match them in bigger steps
@@ -329,39 +338,42 @@ class AdblockRules(object):
     def _is_whitelisted(self, url, options):
         return self._matches(
             url, options,
-            self.whitelist_re, self.whitelist_domains, self.whitelist_adv
+            self.whitelist_re,
+            self.whitelist_require_domain,
+            self.whitelist_with_options
         )
 
     def _is_blacklisted(self, url, options):
         return self._matches(
             url, options,
-            self.blacklist_re, self.blacklist_domains, self.blacklist_adv
+            self.blacklist_re,
+            self.blacklist_require_domain,
+            self.blacklist_with_options
         )
 
     def _matches(self, url, options,
-                 general_re, rules_with_domains, rules_with_options):
+                 general_re, domain_required_rules, rules_with_options):
         """
         Return if ``url``/``options`` are matched by rules defined by
-        ``general_re``, ``rules_with_domains`` and ``rules_with_options``.
+        ``general_re``, ``domain_required_rules`` and ``rules_with_options``.
 
         ``general_re`` is a compiled regex for rules without options.
 
-        ``rules_with_domains`` is a {domain: [rules]} mapping - per-domain
-        index of applicable rules which have 'domain' option.
+        ``domain_required_rules`` is a {domain: [rules_which_require_it]}
+        mapping.
 
          ``rules_with_options`` is a list of AdblockRule instances that
-        don't have 'domain' option, but have other options.
+        don't require any domain, but have other options.
         """
         if general_re and general_re.search(url):
             return True
 
         rules = []
-        if 'domain' in options and rules_with_domains:
+        if 'domain' in options and domain_required_rules:
             src_domain = options['domain']
             for domain in _domain_variants(src_domain):
-                if domain in rules_with_domains:
-                    rules = rules_with_domains[domain]
-                    break
+                if domain in domain_required_rules:
+                    rules.extend(domain_required_rules[domain])
 
         rules.extend(rules_with_options)
 
@@ -383,8 +395,10 @@ class AdblockRules(object):
     def _domain_index(cls, rules):
         result = defaultdict(list)
         for rule in rules:
-            for domain in rule.options.get('domain', []):
-                result[domain].append(rule)
+            domains = rule.options.get('domain', {})
+            for domain, required in domains.items():
+                if required:
+                    result[domain].append(rule)
         return dict(result)
 
 
