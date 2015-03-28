@@ -1,6 +1,15 @@
 Changes
 =======
 
+0.4 (2015-03-29)
+----------------
+
+* AdblockRule now caches the compiled regexes (thanks
+  https://github.com/mozbugbox);
+* Fixed an issue with "domain" option handling
+  (thanks https://github.com/nbraem for the bug report and a test case);
+* cleanups and test improvements.
+
 0.3 (2014-07-11)
 ----------------
 
