@@ -29,10 +29,13 @@ Installation
 If you plan to use this library with a large number of filters
 installing pyre2_ library is highly recommended: the speedup
 for a list of default EasyList_ filters can be greater than 1000x.
-Version from github is required::
 
-    pip install git+https://github.com/axiak/pyre2.git#egg=re2
+    pip install 're2 >= 0.2.21'
 
+Note that pyre2 library requires C++ re2_ library installed.
+On OS X you can get it using homebrew (``brew install re2``).
+
+.. _re2: https://github.com/google/re2
 .. _pyre2: https://github.com/axiak/pyre2
 .. _EasyList: https://easylist.adblockplus.org/en/
 
@@ -94,8 +97,7 @@ Give re2 library more memory to fix that::
 
     >>> rules = AdblockRules(raw_rules, use_re2=True, max_mem=512*1024*1024)  # doctest: +SKIP
 
-Make sure you are not using re2 0.2.20 installed from PyPI, it doesn't work.
-Install it from the github repo.
+Make sure you are using re2 0.2.20 installed from PyPI, it doesn't work.
 
 Parsing rules with options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
