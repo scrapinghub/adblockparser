@@ -13,6 +13,10 @@ adblockparser
    :target: https://travis-ci.org/scrapinghub/adblockparser
    :alt: Build Status
 
+.. image:: http://codecov.io/github/scrapinghub/adblockparser/coverage.svg?branch=master
+   :target: http://codecov.io/github/scrapinghub/adblockparser?branch=master
+   :alt: Code Coverage
+
 
 ``adblockparser`` is a package for working with `Adblock Plus`_ filter rules.
 It can parse Adblock Plus filters and match URLs against them.
