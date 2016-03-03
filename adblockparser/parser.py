@@ -408,10 +408,15 @@ def _domain_variants(domain):
     ['foo.bar.example.com', 'bar.example.com', 'example.com']
     >>> list(_domain_variants("example.com"))
     ['example.com']
+    >>> list(_domain_variants("localhost"))
+    ['localhost']
     """
     parts = domain.split('.')
-    for i in range(len(parts), 1, -1):
-        yield ".".join(parts[-i:])
+    if len(parts) == 1:
+        yield parts[0]
+    else:
+        for i in range(len(parts), 1, -1):
+            yield ".".join(parts[-i:])
 
 
 def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
