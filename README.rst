@@ -26,6 +26,8 @@ Installation
 
     pip install adblockparser
 
+Python 2.7 and Python 3.3+ are supported.
+
 If you plan to use this library with a large number of filters
 installing pyre2_ library is highly recommended: the speedup
 for a list of default EasyList_ filters can be greater than 1000x.
