@@ -12,6 +12,11 @@ before_install: >
      sudo apt-get update -q;
      sudo apt-get install -y libre2-dev;
   fi
+
 install:
-- pip install -U tox
+- pip install -U tox codecov
+
 script: tox
+
+after_success:
+- codecov

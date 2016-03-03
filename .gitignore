@@ -8,3 +8,5 @@ dist
 .ipynb_checkpoints
 MANIFEST
 easylist.txt
+.cache
+.coverage
