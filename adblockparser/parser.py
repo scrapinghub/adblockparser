@@ -428,8 +428,6 @@ def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
     large regexes much faster than stdlib re module (10x is not uncommon),
     but there are some gotchas:
 
-    * at the moment of writing (Feb 2014) latest re2 pypi release (0.2.20)
-      doesn't work; pyre2 must be installed from the github repo;
     * in case of "DFA out of memory" errors use ``max_mem`` argument
       to increase the amount of memory re2 is allowed to use.
     """
