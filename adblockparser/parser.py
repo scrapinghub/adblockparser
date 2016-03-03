@@ -83,7 +83,7 @@ class AdblockRule(object):
         self.regex_re = None
 
         rule_text = rule_text.strip()
-        self.is_comment = rule_text.startswith(('!', '[Adblock'))
+        self.is_comment = not rule_text or rule_text.startswith(('!', '[Adblock'))
         if self.is_comment:
             self.is_html_rule = self.is_exception = False
         else:
