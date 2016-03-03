@@ -280,3 +280,8 @@ def test_rules_instantiation():
     rules = AdblockRules([rule])
     assert rule.match_url("http://example.com/adv")
     assert rules.should_block("http://example.com/adv")
+
+
+def test_empty_rule():
+    rules = AdblockRules(["adv", "", " \t", AdblockRule("adv2")])
+    assert len(rules.rules) == 2
