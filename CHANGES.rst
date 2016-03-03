@@ -1,6 +1,17 @@
 Changes
 =======
 
+0.5 (2016-03-04)
+----------------
+
+* Fixed an issue with blank lines in filter files
+  (thanks https://github.com/skrypka);
+* fixed an issue with applying rules with 'domain' option
+  when domain doesn't have a dot (e.g. 'localhost');
+* Python 2.6 and Python 3.2 support is dropped;
+  adblockparser likely still work in these interpreters,
+  but this is no longer checked by tests.
+
 0.4 (2015-03-29)
 ----------------
 

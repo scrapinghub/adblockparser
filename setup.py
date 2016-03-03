@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-version = '0.4'
+version = '0.5'
 
 setup(
     name='adblockparser',
@@ -9,7 +9,7 @@ setup(
     description="Parser for Adblock Plus rules",
     long_description=open('README.rst').read() + '\n\n' + open('CHANGES.rst').read(),
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2",
