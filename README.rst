@@ -141,8 +141,7 @@ There are some known limitations of the current implementation:
 * ``match-case`` filter option is not properly supported (it is ignored);
 * ``document`` filter option is not properly supported;
 * rules are not validated *before* parsing, so invalid rules may raise
-  inconsistent exceptions or silently work incorrectly;
-* regular expressions in rules are not supported.
+  inconsistent exceptions or silently work incorrectly.
 
 It is possible to remove all these limitations. Pull requests are welcome
 if you want to make it happen sooner!
