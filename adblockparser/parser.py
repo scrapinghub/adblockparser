@@ -221,6 +221,10 @@ class AdblockRule(object):
             raise ValueError("Invalid rule")
             # return rule
 
+        # Check if the rule isn't already regexp
+        if rule.startswith('/') and rule.endswith('/'):
+            return rule[1:-1]
+
         # escape special regex characters
         rule = re.sub(r"([.$+?{}()\[\]\\])", r"\\\1", rule)
 
