@@ -282,3 +282,8 @@ def test_rules_instantiation():
 def test_empty_rule():
     rules = AdblockRules(["adv", "", " \t", AdblockRule("adv2")])
     assert len(rules.rules) == 2
+
+
+def test_empty_regexp_rules():
+    with pytest.raises(ValueError):
+        AdblockRules(['adv', '/', '//'])
