@@ -257,10 +257,7 @@ def test_rules_with_options(rules, results, use_re2):
         assert rules.should_block(url, params) == should_block
 
 
-@pytest.mark.xfail
 def test_regex_rules():
-    # Regex rules are not supported yet.
-    # There are no such rules in EasyList filters.
     rules = AdblockRules(["/banner\d+/"])
     assert rules.should_block("banner123")
     assert not rules.should_block("banners")
@@ -285,3 +282,8 @@ def test_rules_instantiation():
 def test_empty_rule():
     rules = AdblockRules(["adv", "", " \t", AdblockRule("adv2")])
     assert len(rules.rules) == 2
+
+
+def test_empty_regexp_rules():
+    with pytest.raises(ValueError):
+        AdblockRules(['adv', '/', '//'])
