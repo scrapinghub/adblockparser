@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-version = '0.5'
+version = '0.6'
 
 setup(
     name='adblockparser',

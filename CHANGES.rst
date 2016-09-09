@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.6 (2016-09-10)
+----------------
+
+* Added support for regex rules (thanks https://github.com/mlyko).
+
 0.5 (2016-03-04)
 ----------------
 
