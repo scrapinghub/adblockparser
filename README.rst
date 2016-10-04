@@ -43,7 +43,7 @@ On OS X you can get it using homebrew (``brew install re2``).
 
 .. _re2: https://github.com/google/re2
 .. _pyre2: https://github.com/axiak/pyre2
-.. _EasyList: https://easylist.adblockplus.org/en/
+.. _EasyList: https://easylist.to/
 
 Usage
 -----
