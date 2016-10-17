@@ -10,3 +10,4 @@ MANIFEST
 easylist.txt
 .cache
 .coverage
+htmlcov
