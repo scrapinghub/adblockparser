@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.7 (2016-10-17)
+----------------
+
+* Fixed parsing issue with recent easylist.txt;
+* fixed a link to easylist (thanks https://github.com/limonte).
+
 0.6 (2016-09-10)
 ----------------
 
