@@ -6,6 +6,10 @@ from functools import partial
 from adblockparser.utils import split_data
 
 
+class AdblockParsingError(ValueError):
+    pass
+
+
 class AdblockRule(object):
     r"""
     AdBlock Plus rule.
@@ -70,6 +74,7 @@ class AdblockRule(object):
         "match-case",
         "collapse",
         "donottrack",
+        "websocket",
     ]
     OPTIONS_SPLIT_PAT = ',(?=~?(?:%s))' % ('|'.join(BINARY_OPTIONS + ["domain"]))
     OPTIONS_SPLIT_RE = re.compile(OPTIONS_SPLIT_PAT)
@@ -218,14 +223,14 @@ class AdblockRule(object):
         Convert AdBlock rule to a regular expression.
         """
         if not rule:
-            raise ValueError("Invalid rule")
-            # return rule
+            return rule
 
         # Check if the rule isn't already regexp
         if rule.startswith('/') and rule.endswith('/'):
-            rule = rule[1:-1]
-            if not rule:
-                raise ValueError('Invalid rule')
+            if len(rule) > 1:
+                rule = rule[1:-1]
+            else:
+                raise AdblockParsingError('Invalid rule')
             return rule
 
         # escape special regex characters
@@ -300,7 +305,7 @@ class AdblockRules(object):
                 r if isinstance(r, rule_cls) else rule_cls(r)
                 for r in rules
             )
-            if r.regex and r.matching_supported(_params)
+            if (r.regex or r.options) and r.matching_supported(_params)
         ]
 
         # "advanced" rules are rules with options,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from adblockparser import AdblockRules, AdblockRule
+from adblockparser import AdblockRules, AdblockRule, AdblockParsingError
 
 import pytest
 
@@ -199,6 +199,11 @@ RULES_WITH_OPTIONS_TESTS = {
         ("http://example.net/adv", {'domain': 'foo.example.com', 'script': False}, False),
         ("http://example.net/adv", {'domain': 'www.foo.example.com', 'script': False}, False),
     ],
+
+    "$websocket,domain=extratorrent.cc|firstrowau.eu": [
+        ("http://example.com", {'domain': 'extratorrent.cc', 'websocket': True}, True),
+        ("http://example.com", {'domain': 'extratorrent.cc', 'websocket': False}, False),
+    ]
 }
 
 MULTIRULES_WITH_OPTIONS_TESTS = {
@@ -279,11 +284,11 @@ def test_rules_instantiation():
     assert rules.should_block("http://example.com/adv")
 
 
-def test_empty_rule():
+def test_empty_rules():
     rules = AdblockRules(["adv", "", " \t", AdblockRule("adv2")])
     assert len(rules.rules) == 2
 
 
 def test_empty_regexp_rules():
-    with pytest.raises(ValueError):
+    with pytest.raises(AdblockParsingError):
         AdblockRules(['adv', '/', '//'])
